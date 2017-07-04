@@ -1,0 +1,1641 @@
+From 81ba39ec6ca76d84f12d0fd32e6b239a95c87122 Mon Sep 17 00:00:00 2001
+From: hernan <hrnn.rodriguez@gmail.com>
+Date: Mon, 8 May 2017 17:20:37 -0300
+Subject: [PATCH 1/1] PMIC tps65185 OK
+
+---
+ arch/arm/boot/dts/imx7dea-ucom-kit-lvds.dts | 105 ++++----
+ arch/arm/boot/dts/imx7dea-ucom-kit-m4.dts   |   1 +
+ arch/arm/boot/dts/imx7dea-ucom-kit.dts      | 385 +++++++++++++++-------------
+ drivers/hwmon/tps6518x-hwmon.c              |  18 +-
+ drivers/mfd/tps6518x-core.c                 |  28 +-
+ drivers/regulator/tps6518x-regulator.c      | 201 +++++++++------
+ drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c    |   5 +-
+ include/linux/mfd/tps6518x.h                |  20 +-
+ 8 files changed, 410 insertions(+), 353 deletions(-)
+
+diff --git a/arch/arm/boot/dts/imx7dea-ucom-kit-lvds.dts b/arch/arm/boot/dts/imx7dea-ucom-kit-lvds.dts
+index df69406..76a5ace 100644
+--- a/arch/arm/boot/dts/imx7dea-ucom-kit-lvds.dts
++++ b/arch/arm/boot/dts/imx7dea-ucom-kit-lvds.dts
+@@ -19,12 +19,9 @@
+  * when using LVDS.
+  */
+ 
+-&epdc {
+-        status = "okay";
+-};
+ 
+ &i2c1 {
+-    ar1021_rgb {
++/*    ar1021_rgb {
+ 	pinctrl-0 = <&pinctrl_lvds0>;
+ 	interrupt-parent = <&gpio2>;
+ 	interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
+@@ -36,7 +33,7 @@
+ 	interrupt-parent = <&gpio2>;
+ 	interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
+ 	wakeup-gpios = <&gpio2 26 GPIO_ACTIVE_HIGH>;
+-	status = "disabled";
++	status = "disabled";//"okay";
+     };
+ 
+     edt-ft5x06_rgb {
+@@ -59,68 +56,52 @@
+ 	interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
+ 	status = "disabled";
+     };
++*/
+ };
++/*
++&t_lcd {
++        clock-frequency = <65000000>;
++        hactive = <1024>;
++        vactive = <768>;
++        hback-porch = <220>;
++        hfront-porch = <40>;
++        vback-porch = <21>;
++        vfront-porch = <7>;
++        hsync-len = <60>;
++        vsync-len = <10>;
++};
++*/
++&qspi1 {
++		status = "disabled";
+ 
+-&i2c3 {
+-	tps6518x: tps6518x@68 {
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_tps6518x>;
+-		compatible = "ti,tps6518x";
+-		reg = <0x68>;
+-		status = "okay";
+-	
+-		/*
+-		* power sequencing for TPS65180/65181
+-		*/		 
+-		pwr_seq0 = <0xe1>; /* [Vddh-seq=3 | Vpos-seq=2 | Vee-seq=0 | Vneg-seq=1] */
+-		pwr_seq1 = <0x30>; /* [Vneg-dly1=3 |Vee-dly0=0]  mSec */
+-		pwr_seq2 = <0x33>; /* [Vddh-dly3=3 | Vpos-dly2=3] mSec */
+-		/*
+-		 * power sequencing for TPS65185/65186
+-		 */
+-		upseq0 = <0xe4>;
+-		upseq1 = <0x55>;
+-		dwnseq0 = <0x1e>;
+-		dwnseq1 = <0xe0>;
+-				
+-
+-		gpio_pmic_pwrgood = <&gpio2 31 0>;	//<&gpio2 31 0>; //las mismas variables se llaman desde el device driver
+-		gpio_pmic_vcom_ctrl = <&gpio7 0 0>; //<&gpio4 14 0>;
+-		gpio_pmic_wakeup = <&gpio7 13 0>; //<&gpio2 23 0>;
+-		gpio_pmic_intr = <&gpio7 12 0>;
+-		gpio_pmic_powerup = <&gpio7 14 0>;
+-
+-		regulators {
+-			DISPLAY_reg: DISPLAY {
+-				regulator-name = "DISPLAY";
+-			};
+-
+-
+-			VCOM_reg: VCOM {
+-				regulator-name = "VCOM";
+-				/* 2's-compliment, -4325000 */
+-				regulator-min-microvolt = <0xffbe0178>;
+-				/* 2's-compliment, -500000 */
+-				regulator-max-microvolt = <0xfff85ee0>;
+-			};
+-
+-			V3P3_reg: V3P3 {
+-				regulator-name = "V3P3";
+-			};
+-		};
++	flash0 {
++		status = "disabled";
+ 	};
+ };
+ 
+-&t_lcd {
+-	clock-frequency = <65000000>;
+-        hactive = <1024>;
+-        vactive = <768>;
+-		hback-porch = <220>;
+-		hfront-porch = <40>;
+-		vback-porch = <21>;
+-		vfront-porch = <7>;
+-		hsync-len = <60>;
+-		vsync-len = <10>;
++&epdc {
++        status = "okay";
++};
++
++&fec1 {
++	status = "disabled";
++};
++
++&fec2 {
++	status = "disabled";
++};
++
++
++&flexcan1 {
++	status = "disabled";
++};
++
++&flexcan2 {
++	status = "disabled";
++};
++
++&tps6518x {
++        status = "okay";
+ };
+ 
+ &backlight_lcd {
+diff --git a/arch/arm/boot/dts/imx7dea-ucom-kit-m4.dts b/arch/arm/boot/dts/imx7dea-ucom-kit-m4.dts
+index 78a58f7..21495f8 100644
+--- a/arch/arm/boot/dts/imx7dea-ucom-kit-m4.dts
++++ b/arch/arm/boot/dts/imx7dea-ucom-kit-m4.dts
+@@ -59,3 +59,4 @@
+ &wdog3{
+ 	status = "disabled";
+ };
++
+diff --git a/arch/arm/boot/dts/imx7dea-ucom-kit.dts b/arch/arm/boot/dts/imx7dea-ucom-kit.dts
+index 5ee0b70..58a1d81 100644
+--- a/arch/arm/boot/dts/imx7dea-ucom-kit.dts
++++ b/arch/arm/boot/dts/imx7dea-ucom-kit.dts
+@@ -17,14 +17,14 @@
+ 
+ 	/* Aliases to allow u-boot to modify the device tree */
+ 	aliases {
+-		fb_rgb = &lcdif;
+-		t_rgb = &t_lcd;
+-		bl_rgb = &backlight_lcd;
+-		rgb = &display0;
++		//fb_rgb = &epdc;//&lcdif;
++		//t_rgb = &t_lcd; //&epdc0;
++		//bl_rgb = &backlight_lcd;
++		//rgb = &epdc;//&display0; //&epdc0;
+ 		ts_con_rgb = &i2c1;
+ 	};
+ 
+-	memory {
++ 	memory {
+ 		reg = <0x80000000 0x80000000>;
+ 	};
+ 
+@@ -34,7 +34,7 @@
+ 		brightness-levels = <0 4 8 16 32 64 128 255>;
+ 		default-brightness-level = <6>;
+ 		enable-gpios = <&gpio2 24 GPIO_ACTIVE_HIGH>;
+-		status = "disabled";//status = "okay";
++		status = "okay";
+ 	};
+ 
+ 	pxp_v4l2_out {
+@@ -112,7 +112,7 @@
+ 			enable-active-high;
+ 		};
+ 	};
+-
++/*
+         sound {
+                 compatible = "fsl,imx-audio-wm8731";
+                 model = "wm8731-audio";
+@@ -122,8 +122,31 @@
+                 audio-codec = <&codec>;
+                 audio-routing = "LOUT", "ROUT", "LLINEIN", "RLINEIN";
+         };
++/* added 
++	spi4 {
++		compatible = "spi-gpio";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_spi1>;
++		status = "okay";
++		gpio-sck = <&gpio1 13 0>;
++		gpio-mosi = <&gpio1 9 0>;
++		cs-gpios = <&gpio1 12 0>;
++		num-chipselects = <1>;
++		#address-cells = <1>;
++		#size-cells = <0>;
+ 
++	/*gpio_spi: gpio_spi@0 {
++			compatible = "fairchild,74hc595";
++			gpio-controller;
++			#gpio-cells = <2>;
++			reg = <0>;
++			registers-number = <1>;
++			registers-default = /bits/ 8 <0x54>; /* Enable PERI_3V3, SENSOR_RST_B and HDMI_RST*/
++		//	spi-max-frequency = <100000>;
++		//};
+ 
++	//};
++/* */
+ };
+ 
+ &adc1 {
+@@ -133,7 +156,7 @@
+ 
+ &adc2 {
+ 	vref-supply = <&reg_vref_1v8>;
+-	status = "disabled";//status = "okay";
++	status = "okay";
+ };
+ 
+ &clks {
+@@ -144,7 +167,7 @@
+ &cpu0 {
+ 	arm-supply = <&buck1_reg>;
+ };
+-
++/*
+ &csi1 {
+ 	csi-mux-mipi = <&gpr 0x14 4>;
+ 	status = "okay";
+@@ -155,21 +178,22 @@
+ 		};
+ 	};
+ };
+-
++*/
+ &epdc {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_epdc0>;// &pinctrl_enet2_epdc0_en>;
+-	V3P3-supply = <&V3P3_reg>;
+-	VCOM-supply = <&VCOM_reg>;
+-	DISPLAY-supply = <&DISPLAY_reg>;
+-	//en-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+-	status = "okay"; //"disabled";
++        pinctrl-names = "default";
++        pinctrl-0 = <&pinctrl_epdc0>;
++        V3P3-supply = <&V3P3_reg>;
++        VCOM-supply = <&VCOM_reg>;
++        DISPLAY-supply = <&DISPLAY_reg>;
++		//en-gpios = <&gpio_spi 5 0>;
++        status = "okay";
+ };
+ 
+ &epxp {
+-	status = "disabled";//"okay";
++	status = "okay";
+ };
+ 
++/*
+ &fec1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_enet1>;
+@@ -181,7 +205,7 @@
+ 	phy-mode = "rgmii";
+ 	phy-handle = <&ethphy0>;
+ 	fsl,magic-packet;
+-	status ="disabled"; //"okay";
++	status = "disabled";//"okay";
+ 
+ 	mdio {
+ 		#address-cells = <1>;
+@@ -193,27 +217,27 @@
+ 		};
+ 	};
+ };
+-
++*/
+ 
+ &flexcan1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_flexcan1>;
+ 	xceiver-supply = <&reg_can2_3v3>;
+-	trx-stby-gpio = <&gpio2 23 GPIO_ACTIVE_LOW>;
+-	status = "disabled";//status = "okay";
++	trx-en-gpio = <&gpio2 23 GPIO_ACTIVE_LOW>;
++	status = "disabled";//"okay";
+ };
+ 
+ &flexcan2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_flexcan2>;
+ 	xceiver-supply = <&reg_can2_3v3>;
+-	trx-stby-gpio = <&gpio2 23 GPIO_ACTIVE_LOW>;
+-	status = "disabled";//status = "okay";
++	trx-en-gpio = <&gpio2 23 GPIO_ACTIVE_LOW>;
++	status = "disabled";//"okay";
+ };
+-
++/*
+ &mipi_csi {
+ 	clock-frequency = <240000000>;
+-	status = "okay";
++	status = "disabled";//"okay";   //////here..
+ 	port {
+ 		mipi_sensor_ep: endpoint1 {
+ 			remote-endpoint = <&ov5647_mipi_ep>;
+@@ -227,7 +251,7 @@
+ 		};
+ 	};
+ };
+-
++*/
+ &i2c1 {
+ 	clock-frequency = <100000>;
+ 	pinctrl-names = "default";
+@@ -399,13 +423,12 @@
+ 		};
+ 	};
+ 
+-	at24@55 {
+-		compatible = "at,24c64";
+-		pagesize = <32>;
+-		reg = <0x55>;
+-	};
+-
+-
++        at24@55 {
++                compatible = "at,24c64";
++                pagesize = <32>;
++                reg = <0x55>;
++        };
++/*
+         ov5647_mipi: ov5647_mipi@36 {
+                 compatible = "ovti,ov5647_mipi";
+                 reg = <0x36>;
+@@ -430,9 +453,9 @@
+                 reg = <0x1a>;
+                 clocks = <&clks IMX7D_AUDIO_MCLK_ROOT_CLK>;
+         };
+-
++*/
+         /* AR1021 touch controller through RGB display interface connector on Carrier Board */
+-        ar1021_rgb {
++/*        ar1021_rgb {
+                 compatible = "microchip,ar1021-i2c";
+                 reg = <0x4d>;
+                 pinctrl-names = "default";
+@@ -442,11 +465,10 @@
+                 ar1021,swap_xy;
+                 ar1021,invert_x;
+                 #ar1021,invert_y;
+-				status = "disabled"; //add
+         };
+ 
+         /* eGalax touch controller through RGB display interface connector on Carrier Board */
+-        egalax_ts_rgb {
++/*        egalax_ts_rgb {
+                 compatible = "eeti,egalax_ts";
+                 reg = <0x04>;
+                 pinctrl-names = "default";
+@@ -458,39 +480,40 @@
+         };
+ 
+         /* FocalTech touch controller through RGB display interface connector on Carrier Board */
+-        edt-ft5x06_rgb {
++/*        edt-ft5x06_rgb {
+                 compatible = "edt,edt-ft5x06";
+                 reg = <0x38>;
+                 pinctrl-names = "default";
+                 pinctrl-0 = <&pinctrl_rgb_connector>;
+                 interrupt-parent = <&gpio5>;
+                 interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
+-		reset-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
++                reset-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
+                 status = "disabled";
+         };
+ 
+         /* Ilitek touch controller through RGB display interface connector on Carrier Board */
+-        ilitek_aim_rgb {
++ /*       ilitek_aim_rgb {
+                 compatible = "ilitek,ilitek_aim";
+                 reg = <0x41>;
+                 pinctrl-names = "default";
+                 pinctrl-0 = <&pinctrl_rgb_connector>;
+                 interrupt-parent = <&gpio5>;
+                 interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
+-		reset-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
+-		status = "disabled";
++                reset-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
++                status = "disabled";
+         };
+ 
+         /* Sitronix touch controller through RGB display interface connector on Carrier Board */
+-        sitronix_rgb {
++ /*       sitronix_rgb {
+                 compatible = "sitronix,sitronix_i2c";
+                 reg = <0x55>;
+                 pinctrl-names = "default";
+                 pinctrl-0 = <&pinctrl_rgb_connector>;
+                 interrupt-parent = <&gpio5>;
+                 interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
+-				status = "disabled"; //add
+-        };
++                reset-gpios = <&gpio2 27 GPIO_ACTIVE_HIGH>;
++                status = "disabled";
++        };  */
+ };
+ 
+ &i2c2 {
+@@ -498,8 +521,7 @@
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
+-
+-	/* elan-touch ektf2232 */  
++	/* elan-touch ektf2232-driver */  
+ /*	elan@15 { 
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&pinctrl_epdc_elan_touch>;
+@@ -523,12 +545,10 @@
+ 		gpio_elan_cs = <&gpio1 2 0>;	//<&gpio2 9 0>;  //GPIO1_IO02 -> CE   <&gpio1 2 0>;
+ 		gpio_elan_rst = <&gpio1 3 0>; 	//<&gpio4 4 0>; //GPIO1_IO03 -> RESET <&gpio1 3 0>; 
+ 		gpio_intr = <&gpio7 7 0>;	  //ENET1_TD1  -> (INTERRUP MX7D_PAD_ENET1_RGMII_TD1__GPIO7_IO7)
+-		status = "okay"; //ENABLE_TOUCH -> GPIO1_IO04 (mosfet) (jumper permanente)
++		status = "okay"; 	//ENABLE_TOUCH -> GPIO1_IO04 (mosfet) (jumper permanente)
+ 	};
+-
+ };
+ 
+-
+ &i2c3 {
+ 	clock-frequency = <100000>;
+ 	pinctrl-names = "default";
+@@ -548,26 +568,24 @@
+ 		pwr_seq1 = <0x30>; /* [Vneg-dly1=3 |Vee-dly0=0]  mSec */
+ 		pwr_seq2 = <0x33>; /* [Vddh-dly3=3 | Vpos-dly2=3] mSec */
+ 		/*
+-		 * power sequencing for TPS65185/65186
++		 * Default power sequencing for TPS65185/65186, support E-Ink panel
+ 		 */
+-		upseq0 = <0xe4>;
+-		upseq1 = <0x55>;
+-		dwnseq0 = <0x1e>;
+-		dwnseq1 = <0xe0>;
++		upseq0 = <0xe4>;	/* VNEG_UP - VEE_UP - VPOS_UP - VDDH_UP */
++		upseq1 = <0x55>;	/* 6ms + 6ms + 6ms + 6ms */
++		dwnseq0 = <0x1e>;	/* VDDH_UP - VPOS_UP - VEE_UP - VNEG_UP  */
++		dwnseq1 = <0xe0>;	/* 48ms + 24ms + 6 ms + 3ms */
+ 				
+-
+-		gpio_pmic_pwrgood = <&gpio2 31 0>;	//<&gpio2 31 0>; //las mismas variables se llaman desde el device driver
+-		gpio_pmic_vcom_ctrl = <&gpio7 0 0>; //<&gpio4 14 0>;
+-		gpio_pmic_wakeup = <&gpio7 13 0>; // (6*32)+13=205
+-		gpio_pmic_intr = <&gpio7 12 0>;
+-		gpio_pmic_powerup = <&gpio7 14 0>; // (6*32)+14=206
++		gpio_pmic_pwrgood = <&gpio2 31 0>;	// 63 - las mismas variables se llaman desde el device driver
++		gpio_pmic_vcom_ctrl = <&gpio7 0 0>; //(6*32)+0=192	  	
++		gpio_pmic_wakeup = <&gpio7 13 0>; 	//(6*32)+13=205   	
++		gpio_pmic_intr = <&gpio7 12 0>;   	//(6*32)+12=204 
++		gpio_pmic_powerup = <&gpio7 14 0>; 	//(6*32)+14=206 	  
+ 
+ 		regulators {
+ 			DISPLAY_reg: DISPLAY {
+ 				regulator-name = "DISPLAY";
+ 			};
+ 
+-
+ 			VCOM_reg: VCOM {
+ 				regulator-name = "VCOM";
+ 				/* 2's-compliment, -4325000 */
+@@ -587,50 +605,82 @@
+ 	clock-frequency = <100000>;
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c4>;
+-	status = "okay"; //"disabled";
++	status = "disabled";
++
+ };
+ 
+ &iomuxc {
+ 	pinctrl-names = "default";
+-	//pinctrl-0 = <&pinctrl_hog_1>;
++	pinctrl-0 = <&pinctrl_hog_1>;
+ 
+ 	imx7d-sdb {
+-//		pinctrl_hog_1: hoggrp-1 {
+-//			fsl,pins = <
+-//				MX7D_PAD_UART3_CTS_B__GPIO4_IO7	0x14
+-//				MX7D_PAD_ECSPI2_SS0__GPIO4_IO23	 0x80000000  /* bt reg on */
+-//				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
+-//				MX7D_PAD_SD1_CD_B__GPIO5_IO0		0x59 /* CD */
+-//				MX7D_PAD_SD1_RESET_B__GPIO5_IO2		0x59 /* vmmc */
+-//				MX7D_PAD_EPDC_SDCE3__GPIO2_IO23         0x59
+-//				//MX7D_PAD_EPDC_DATA14__GPIO2_IO14        0x59  /* CAN_STBY */
+-//			>;
+-//		};
++		pinctrl_hog_1: hoggrp-1 {
++			fsl,pins = <
++				MX7D_PAD_UART3_CTS_B__GPIO4_IO7	0x14
++				MX7D_PAD_ECSPI2_SS0__GPIO4_IO23	 0x80000000  /* bt reg on */
++				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
++				MX7D_PAD_SD1_CD_B__GPIO5_IO0		0x59 /* CD */
++				MX7D_PAD_SD1_RESET_B__GPIO5_IO2		0x59 /* vmmc */
++				MX7D_PAD_EPDC_SDCE3__GPIO2_IO23         0x59
++				//MX7D_PAD_EPDC_DATA14__GPIO2_IO14        0x59  /* CAN_STBY */
++			>;
++		};
+ 
++                pinctrl_epdc0: epdcgrp0 {
++                        fsl,pins = <
++				MX7D_PAD_EPDC_DATA00__EPDC_DATA0  0x80000000 	//0x2 
++				MX7D_PAD_EPDC_DATA01__EPDC_DATA1  0x80000000
++				MX7D_PAD_EPDC_DATA02__EPDC_DATA2  0x80000000
++				MX7D_PAD_EPDC_DATA03__EPDC_DATA3  0x80000000
++				MX7D_PAD_EPDC_DATA04__EPDC_DATA4  0x80000000
++				MX7D_PAD_EPDC_DATA05__EPDC_DATA5  0x80000000
++				MX7D_PAD_EPDC_DATA06__EPDC_DATA6  0x80000000
++				MX7D_PAD_EPDC_DATA07__EPDC_DATA7  0x80000000
++				MX7D_PAD_EPDC_DATA08__EPDC_DATA8  0x80000000
++				MX7D_PAD_EPDC_DATA09__EPDC_DATA9  0x80000000
++				MX7D_PAD_EPDC_DATA10__EPDC_DATA10 0x80000000
++				MX7D_PAD_EPDC_DATA11__EPDC_DATA11 0x80000000
++				MX7D_PAD_EPDC_DATA12__EPDC_DATA12 0x80000000
++				MX7D_PAD_EPDC_DATA13__EPDC_DATA13 0x80000000
++				MX7D_PAD_EPDC_DATA14__EPDC_DATA14 0x80000000
++				MX7D_PAD_EPDC_DATA15__EPDC_DATA15 0x80000000
++				MX7D_PAD_EPDC_SDCLK__EPDC_SDCLK   0x80000000
++				MX7D_PAD_EPDC_SDLE__EPDC_SDLE     0x80000000
++				MX7D_PAD_EPDC_SDOE__EPDC_SDOE     0x80000000
++				//MX7D_PAD_EPDC_SDSHR__EPDC_SDSHR   0x80000000
++				MX7D_PAD_EPDC_SDCE0__EPDC_SDCE0   0x80000000
++				//MX7D_PAD_EPDC_SDCE1__EPDC_SDCE1   0x80000000
++				MX7D_PAD_EPDC_GDCLK__EPDC_GDCLK   0x80000000
++				MX7D_PAD_EPDC_GDOE__EPDC_GDOE     0x80000000
++				//MX7D_PAD_EPDC_GDRL__EPDC_GDRL     0x80000000
++				MX7D_PAD_EPDC_GDSP__EPDC_GDSP     0x80000000
++				MX7D_PAD_EPDC_BDR0__EPDC_BDR0     0x80000000
++				MX7D_PAD_EPDC_BDR1__EPDC_BDR1     0x80000000
++                        >;
++                };
++
++			/* interrup touch elan BombShellV2 */
+ 		pinctrl_epdc_elan_touch: epdc_elan_touch_grp {
+ 			fsl,pins = <
+ 				MX7D_PAD_ENET1_RGMII_TD1__GPIO7_IO7	0x80000000	
+-//				MX7D_PAD_SAI1_RX_DATA__GPIO6_IO12 0x59
+-//				MX7D_PAD_SAI1_TX_DATA__GPIO6_IO15 0x1b
+-//				MX7D_PAD_SAI1_TX_BCLK__GPIO6_IO13 0x80000000
+ 			>;
+ 		};
+ 
+ 		pinctrl_tps6518x: tps6518xgrp-1 {
+-			fsl,pins = <
+-				MX7D_PAD_ENET1_RX_CLK__GPIO7_IO13		0x80000000 //MX7D_PAD_ENET1_RX_CLK__EPDC_PWR_WAKE -- MX7D_PAD_EPDC_SDCE3__GPIO2_IO23		0x80000000  /* wakeup */
+-				MX7D_PAD_ENET1_RGMII_RD0__GPIO7_IO0		0x80000000 //MX7D_PAD_ENET1_RGMII_RD0__EPDC_VCOM0 --MX7D_PAD_I2C4_SCL__GPIO4_IO14		0x80000000  /* vcom_ctrl */ MX7D_PAD_ENET1_RGMII_RD0__GPIO7_IO0
+-				MX7D_PAD_ENET1_TX_CLK__GPIO7_IO12		0x80000000 //MX7D_PAD_ENET1_TX_CLK__EPDC_PWR_IRQ // MX7D_PAD_EPDC_SDCE2__GPIO2_IO22		0x80000000  /* pwr int */
+-				MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31		0x80000000  ///* pwrgood */  Ok Idem MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31 -- MX7D_PAD_EPDC_PWR_STAT__EPDC_PWR_STAT
+-				MX7D_PAD_ENET1_CRS__GPIO7_IO14			0x80000000 //MX7D_PAD_ENET1_CRS__EPDC_PWR_CTRL0		//MX7D_PAD_EPDC_PWR_COM__GPIO2_IO30	0x80000000  /* v3p3 */
++			fsl,pins = <		
++				MX7D_PAD_ENET1_RX_CLK__GPIO7_IO13	0x80000000//--MX7D_PAD_EPDC_SDCE3__GPIO2_IO23 /* wakeup */
++				MX7D_PAD_ENET1_RGMII_RD0__GPIO7_IO0 0x80000000//--MX7D_PAD_I2C4_SCL__GPIO4_IO14  /* vcom_ctrl */
++				MX7D_PAD_ENET1_TX_CLK__GPIO7_IO12	0x80000000// MX7D_PAD_EPDC_SDCE2__GPIO2_IO22 /* pwr int */
++				MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31	0x80000000/* pwrgood */  //Ok Idem 
++				MX7D_PAD_ENET1_CRS__GPIO7_IO14		0x80000000//MX7D_PAD_EPDC_PWR_COM__GPIO2_IO30 /* pwr-up-v3p3 */
+ 			>;
+ 		};
+-
++/*
+ 		pinctrl_rgb_connector: rgb_connector_grp {
+ 			fsl,pins = <
+ 				MX7D_PAD_SD2_CD_B__GPIO5_IO9          0x1f0b0
+-				MX7D_PAD_EPDC_GDSP__GPIO2_IO27        0x1f0b0
+-			>;
++				//MX7D_PAD_EPDC_GDSP__GPIO2_IO27        0x1f0b0
++ 			>;
+ 		};
+ 
+                 pinctrl_lvds0: lvds0_intgrp {
+@@ -639,7 +689,7 @@
+                         >;
+                 };
+ 
+-
++*/
+ 		pinctrl_ov5647: ov5647grp-1 {
+ 			fsl,pins = <
+ 				MX7D_PAD_I2C4_SCL__GPIO4_IO14           0x39
+@@ -647,60 +697,28 @@
+ 			>;
+ 		};
+ 
+-                pinctrl_epdc0: epdcgrp0 {
+-                        fsl,pins = <
+-				MX7D_PAD_EPDC_DATA00__EPDC_DATA0  0x80000000 //0x2
+-				MX7D_PAD_EPDC_DATA01__EPDC_DATA1  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA02__EPDC_DATA2  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA03__EPDC_DATA3  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA04__EPDC_DATA4  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA05__EPDC_DATA5  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA06__EPDC_DATA6  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA07__EPDC_DATA7  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA08__EPDC_DATA8  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA09__EPDC_DATA9  0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA10__EPDC_DATA10 0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA11__EPDC_DATA11 0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA12__EPDC_DATA12 0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA13__EPDC_DATA13 0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA14__EPDC_DATA14 0x80000000//0x2
+-				MX7D_PAD_EPDC_DATA15__EPDC_DATA15 0x80000000//0x2
+-				MX7D_PAD_EPDC_SDCLK__EPDC_SDCLK   0x80000000//0x2
+-				MX7D_PAD_EPDC_SDLE__EPDC_SDLE     0x80000000//0x2
+-				MX7D_PAD_EPDC_SDOE__EPDC_SDOE     0x80000000//0x2
+-				//MX7D_PAD_EPDC_SDSHR__EPDC_SDSHR   0x80000000//0x2
+-				MX7D_PAD_EPDC_SDCE0__EPDC_SDCE0   0x80000000//0x2
+-				//MX7D_PAD_EPDC_SDCE1__EPDC_SDCE1   0x80000000//0x2
+-				MX7D_PAD_EPDC_GDCLK__EPDC_GDCLK   0x80000000//0x2
+-				MX7D_PAD_EPDC_GDOE__EPDC_GDOE     0x80000000//0x2
+-				//MX7D_PAD_EPDC_GDRL__EPDC_GDRL     0x80000000//0x2
+-				MX7D_PAD_EPDC_GDSP__EPDC_GDSP     0x80000000//0x2
+-				MX7D_PAD_EPDC_BDR0__EPDC_BDR0     0x80000000//0x2
+-				MX7D_PAD_EPDC_BDR1__EPDC_BDR1     0x80000000//0x2
+-                        >;
+-                };
+-
++/*
+ 		pinctrl_enet1: enet1grp {
+ 			fsl,pins = <
+-			//	MX7D_PAD_GPIO1_IO10__ENET1_MDIO		0x3
+-			//	MX7D_PAD_GPIO1_IO11__ENET1_MDC		0x3
+-			//	MX7D_PAD_ENET1_RGMII_TXC__ENET1_RGMII_TXC	0x1
+-			//	MX7D_PAD_ENET1_RGMII_TD0__ENET1_RGMII_TD0	0x1
+-			//	MX7D_PAD_ENET1_RGMII_TD1__ENET1_RGMII_TD1	0x1
+-			//	MX7D_PAD_ENET1_RGMII_TD2__ENET1_RGMII_TD2	0x1
+-			//	MX7D_PAD_ENET1_RGMII_TD3__ENET1_RGMII_TD3	0x1
+-			//	MX7D_PAD_ENET1_RGMII_TX_CTL__ENET1_RGMII_TX_CTL	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RXC__ENET1_RGMII_RXC	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RD0__ENET1_RGMII_RD0	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RD1__ENET1_RGMII_RD1	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RD2__ENET1_RGMII_RD2	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RD3__ENET1_RGMII_RD3	0x1
+-			//	MX7D_PAD_ENET1_RGMII_RX_CTL__ENET1_RGMII_RX_CTL	0x1
+-			//	MX7D_PAD_ENET1_COL__GPIO7_IO15                  0x1
+-			//	MX7D_PAD_ENET1_RX_CLK__GPIO7_IO13               0x1
++				/*MX7D_PAD_GPIO1_IO10__ENET1_MDIO		0x3
++				MX7D_PAD_GPIO1_IO11__ENET1_MDC		0x3
++				MX7D_PAD_ENET1_RGMII_TXC__ENET1_RGMII_TXC	0x1
++				MX7D_PAD_ENET1_RGMII_TD0__ENET1_RGMII_TD0	0x1
++				MX7D_PAD_ENET1_RGMII_TD1__ENET1_RGMII_TD1	0x1
++				MX7D_PAD_ENET1_RGMII_TD2__ENET1_RGMII_TD2	0x1
++				MX7D_PAD_ENET1_RGMII_TD3__ENET1_RGMII_TD3	0x1
++				MX7D_PAD_ENET1_RGMII_TX_CTL__ENET1_RGMII_TX_CTL	0x1
++				MX7D_PAD_ENET1_RGMII_RXC__ENET1_RGMII_RXC	0x1
++				MX7D_PAD_ENET1_RGMII_RD0__ENET1_RGMII_RD0	0x1
++				MX7D_PAD_ENET1_RGMII_RD1__ENET1_RGMII_RD1	0x1
++				MX7D_PAD_ENET1_RGMII_RD2__ENET1_RGMII_RD2	0x1
++				MX7D_PAD_ENET1_RGMII_RD3__ENET1_RGMII_RD3	0x1
++				MX7D_PAD_ENET1_RGMII_RX_CTL__ENET1_RGMII_RX_CTL	0x1
++				MX7D_PAD_ENET1_COL__GPIO7_IO15                  0x1
++				MX7D_PAD_ENET1_RX_CLK__GPIO7_IO13               0x1
+ 			>;
+ 		};
+-
++*/
+ 		pinctrl_ecspi3_cs: ecspi3_cs_grp {
+ 			fsl,pins = <
+ 				MX7D_PAD_SD2_CD_B__GPIO5_IO9	0x80000000
+@@ -756,7 +774,7 @@
+ 				MX7D_PAD_SAI1_RX_SYNC__I2C4_SCL		0x4000007f
+ 			>;
+ 		};
+-
++/*
+ 		pinctrl_lcdif_dat: lcdifdatgrp {
+ 			fsl,pins = <
+ 				MX7D_PAD_LCD_DATA00__LCD_DATA0	0x79
+@@ -785,7 +803,7 @@
+ 				MX7D_PAD_LCD_DATA23__LCD_DATA23	0x79
+ 			>;
+ 		};
+-
++/*
+ 		pinctrl_lcdif_ctrl: lcdifctrlgrp {
+ 			fsl,pins = <
+ 				MX7D_PAD_LCD_CLK__LCD_CLK	0x79
+@@ -793,11 +811,11 @@
+ 				MX7D_PAD_LCD_VSYNC__LCD_VSYNC	0x79
+ 				MX7D_PAD_LCD_HSYNC__LCD_HSYNC	0x79
+ 				MX7D_PAD_LCD_RESET__LCD_RESET	0x79
+-				MX7D_PAD_EPDC_GDCLK__GPIO2_IO24 0x79
+-				MX7D_PAD_EPDC_GDOE__GPIO2_IO25  0x79
++				//MX7D_PAD_EPDC_GDCLK__GPIO2_IO24 0x79
++				//MX7D_PAD_EPDC_GDOE__GPIO2_IO25  0x79
+ 			>;
+ 		};
+-
++*/
+ 		pinctrl_uart1: uart1grp {
+ 			fsl,pins = <
+ 				MX7D_PAD_UART1_TX_DATA__UART1_DCE_TX 0x56
+@@ -940,7 +958,7 @@
+ 
+                 pinctrl_sai1: sai1grp {
+                         fsl,pins = <
+-                                MX7D_PAD_SAI1_MCLK__SAI1_MCLK           0x1f
++                MX7D_PAD_SAI1_MCLK__SAI1_MCLK           0x1f
+ 				MX7D_PAD_SAI1_TX_BCLK__SAI1_TX_BCLK     0x1f
+ 				MX7D_PAD_SAI1_TX_SYNC__SAI1_TX_SYNC     0x1f
+ 				MX7D_PAD_SAI1_TX_DATA__SAI1_TX_DATA0    0x30
+@@ -956,33 +974,32 @@
+ 				MX7D_PAD_GPIO1_IO13__GPIO1_IO13	0x59
+ 			>;
+ 		};
+-
++/*
+ 		pinctrl_qspi1_1: qspi1grp_1 {
+ 			fsl,pins = <
+-				MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0 0x51
+-				MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1 0x51
+-				MX7D_PAD_EPDC_DATA02__QSPI_A_DATA2 0x51
+-				MX7D_PAD_EPDC_DATA03__QSPI_A_DATA3 0x51
+-				MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK 0x51
+-				MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B 0x51
++			//	MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0 0x51
++			//	MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1 0x51
++			//	MX7D_PAD_EPDC_DATA02__QSPI_A_DATA2 0x51
++			//	MX7D_PAD_EPDC_DATA03__QSPI_A_DATA3 0x51
++			//	MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK 0x51
++			//	MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B 0x51
+ 			>;
+ 		};
+-
++*/
+ 	};
+ };
+ 
+ &iomuxc_lpsr {
+ 	pinctrl-names = "default";
+-//	pinctrl-0 = <&pinctrl_hog_2>;
++	pinctrl-0 = <&pinctrl_hog_2>;
+ 
+ 	imx7d-sdb {
+-//		pinctrl_hog_2: hoggrp-2 {
+-//			fsl,pins = <
+-//				MX7D_PAD_GPIO1_IO05__GPIO1_IO5	0x14
+-//				MX7D_PAD_EPDC_DATA14__GPIO2_IO14 0x59  /* CAN_STBY */
+-//				MX7D_PAD_GPIO1_IO00__WDOD1_WDOG_B 0x74
+-//			>;
+-//		};
++		pinctrl_hog_2: hoggrp-2 {
++			fsl,pins = <
++				MX7D_PAD_GPIO1_IO05__GPIO1_IO5	0x14
++				MX7D_PAD_GPIO1_IO00__WDOD1_WDOG_B 0x74
++			>;
++		};
+ 
+ 		pinctrl_pwm1: pwm1grp {
+ 			fsl,pins = <
+@@ -990,27 +1007,22 @@
+ 			>;
+ 		};
+ 
+-		pinctrl_pwm3: pwm3grp {
++                pinctrl_pwm3: pwm3grp {
+                         fsl,pins = <
+                                 MX7D_PAD_GPIO1_IO03__PWM3_OUT   0x110b0
+                         >;
+                 };
+-/*
+-		pinctrl_enet2_epdc0_en: enet2_epdc0_grp {
+-			fsl,pins = <
+-				MX7D_PAD_GPIO1_IO04__GPIO1_IO4		0x59
+-			>;
+-		};*/
++
+ 	};
+ };
+-
++/*
+ &lcdif {
+ 	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_lcdif_dat
+-		     &pinctrl_lcdif_ctrl>;
++	//pinctrl-0 = <&pinctrl_lcdif_dat
++//		     &pinctrl_lcdif_ctrl>;
+ 	pinctrl-assert-gpios = <&gpio2 25 GPIO_ACTIVE_HIGH>;
+-	display = <&display0>;
+-	status = "disabled";//"okay";
++	display = <&display0>; //<&epdc0>;
++	status = "okay";
+ 
+ 	display0: display {
+ 		bits-per-pixel = <24>;
+@@ -1020,7 +1032,7 @@
+                         native-mode = <&t_lcd>;
+                         t_lcd: t_lcd_default {
+                                 /* values may be changed in bootscript */
+-                                clock-frequency = <33500000>;
++ /*                               clock-frequency = <33500000>;
+                                 hactive = <800>;
+                                 vactive = <480>;
+                                 hback-porch = <89>;
+@@ -1039,7 +1051,18 @@
+                 };
+ 
+ 	};
+-};
++/*
++	epdc0: epdc {
++        pinctrl-names = "default";
++        pinctrl-0 = <&pinctrl_epdc0>;
++        V3P3-supply = <&V3P3_reg>;
++        VCOM-supply = <&VCOM_reg>;
++        DISPLAY-supply = <&DISPLAY_reg>;
++		//en-gpios = <&gpio_spi 5 0>;
++        status = "okay";//"disabled";
++	};
++*/
++//};
+ 
+ &pcie {
+ 	pinctrl-names = "default";
+@@ -1051,13 +1074,13 @@
+ &pwm1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pwm1>;
+-	status = "disabled"; //status = "okay";
++	status = "disabled";//"okay";
+ };
+ 
+ &pwm3 {
+         pinctrl-names = "default";
+         pinctrl-0 = <&pinctrl_pwm3>;
+-        status = "disabled";//status = "okay";
++        status = "disabled";//"okay";
+ };
+ 
+ 
+@@ -1069,7 +1092,7 @@
+ 			  <&clks IMX7D_SAI1_ROOT_CLK>;
+ 	assigned-clock-parents = <&clks IMX7D_PLL_AUDIO_POST_DIV>;
+ 	assigned-clock-rates = <0>, <11289600>;
+-	status = "okay";
++	status = "disabled";//"okay";
+ };
+ 
+ 
+@@ -1155,8 +1178,8 @@
+ 
+ &qspi1 {
+         pinctrl-names = "default";
+-        pinctrl-0 = <&pinctrl_qspi1_1>;
+-        status = "okay";
++        //pinctrl-0 = <&pinctrl_qspi1_1>;
++        status = "disable";  //"okay";
+         ddrsmp=<0>;
+ 
+         flash0: n25q256a@0 {
+@@ -1167,7 +1190,9 @@
+                 /* take off one dummy cycle */
+                 spi-nor,ddr-quad-read-dummy = <6>;
+                 reg = <0>;
++				status = "disabled";
+         };
++
+ };
+ 
+ 
+diff --git a/drivers/hwmon/tps6518x-hwmon.c b/drivers/hwmon/tps6518x-hwmon.c
+index 1e0e778..5032f91 100644
+--- a/drivers/hwmon/tps6518x-hwmon.c
++++ b/drivers/hwmon/tps6518x-hwmon.c
+@@ -92,6 +92,7 @@ static ssize_t show_temp_input(struct device *dev,
+ 	 * begin Temperature conversion
+ 	 */
+ 	tps6518x_reg_read(REG_TPS6518x_REVID,&reg_val);
++	printk("tps6518x_ show_temp_imput() reg_ID=%d \n",reg_val);	
+ 	switch (reg_val & 0xff)
+ 	{
+ 	   case TPS65180_PASS1 :
+@@ -106,13 +107,13 @@ static ssize_t show_temp_input(struct device *dev,
+ 		        msleep(1);
+ 		        tps6518x_reg_read(REG_TPS65180_TMST_CONFIG, &reg_val);
+ 		    }
++//			printk("tps6518x_ Show_temp_imput Function CASE:TPS65181_ value=%d\n",reg_val);				
+ 	        break;
+ 	   case TPS65185_PASS0 :
+ 	   case TPS65186_PASS0 :
+ 	   case TPS65185_PASS1 :
+ 	   case TPS65186_PASS1 :
+ 	   case TPS65185_PASS2 :
+-	   case	TPS65185_PASS3 :	 
+ 	   case TPS65186_PASS2 :
+ 		    reg_val = 0x80;
+ 		    tps6518x_reg_write(REG_TPS65185_TMST1, reg_val);
+@@ -122,6 +123,7 @@ static ssize_t show_temp_input(struct device *dev,
+ 		        msleep(1);
+ 		        tps6518x_reg_read(REG_TPS65185_TMST1, &reg_val);
+ 		    }
++//			printk("tps6518x_ Show_temp_imput Function CASE:TPS65185_ value=%d\n",reg_val);
+ 	        break;
+ 	   default:
+ 		break;	
+@@ -141,6 +143,7 @@ static ssize_t show_intr_regs(struct device *dev,
+ 	 * get the interrupt status register value
+ 	 */
+ 	tps6518x_reg_read(REG_TPS6518x_REVID,&reg_val);
++	printk("tps6518x_ show_intr_regs() reg_ID=%d \n",reg_val);	
+ 	switch (reg_val & 0xff)
+ 	{
+ 	   case TPS65180_PASS1 :
+@@ -150,17 +153,18 @@ static ssize_t show_intr_regs(struct device *dev,
+ 		    tps6518x_reg_read(REG_TPS65180_INT1, &intr_reg_val);
+ 		    tps6518x_reg_read(REG_TPS65180_INT2, &reg_val);
+ 		    intr_reg_val |= reg_val<<8;
++//			printk("tps6518x_ show_int_regs() CASE:TPS65181_PASS2  value_INT2=%d \n",intr_reg_val);			
+ 	        break;
+ 	   case TPS65185_PASS0 :
+ 	   case TPS65186_PASS0 :
+ 	   case TPS65185_PASS1 :
+ 	   case TPS65186_PASS1 :
+ 	   case TPS65185_PASS2 :
+-	   case	TPS65185_PASS3 :
+ 	   case TPS65186_PASS2 :
+ 		    tps6518x_reg_read(REG_TPS65185_INT1, &intr_reg_val);
+ 		    tps6518x_reg_read(REG_TPS65185_INT2, &reg_val);
+ 		    intr_reg_val |= reg_val<<8;
++//			printk("tps6518x_ show_int_regs() CASE:TPS65186_PASS2  value_INT2=%d \n",intr_reg_val);
+ 	        break;
+ 	   default:
+ 		break;	
+@@ -179,6 +183,7 @@ static ssize_t show_vcom(struct device *dev,
+ 	 * get the vcom registers
+ 	 */
+ 	tps6518x_reg_read(REG_TPS6518x_REVID,&reg_val);
++	printk("tps6518x_ show_vcom() reg_ID=%d \n",reg_val);
+ 	switch (reg_val & 0xff)
+ 	{
+ 	   case TPS65180_PASS1 :
+@@ -186,17 +191,18 @@ static ssize_t show_vcom(struct device *dev,
+ 	   case TPS65181_PASS1 :
+ 	   case TPS65181_PASS2 :
+ 		    tps6518x_reg_read(REG_TPS65180_VCOM_ADJUST, &vcom_reg_val);
++//			printk("tps6518x_ show_vcom() CASE:TPS65181_PASS2  value=%d \n",vcom_reg_val);
+ 	        break;
+ 	   case TPS65185_PASS0 :
+ 	   case TPS65186_PASS0 :
+ 	   case TPS65185_PASS1 :
+ 	   case TPS65186_PASS1 :
+ 	   case TPS65185_PASS2 :
+-	   case	TPS65185_PASS3 :
+ 	   case TPS65186_PASS2 :
+ 		    tps6518x_reg_read(REG_TPS65185_VCOM1, &vcom_reg_val);
+ 		    tps6518x_reg_read(REG_TPS65185_VCOM2, &reg_val);
+ 		    vcom_reg_val |= reg_val<<8;
++//			printk("tps6518x_ show_vcom() CASE:TPS65186_PASS2  value=%d \n",vcom_reg_val);
+ 	        break;
+ 	   default:
+ 		break;	
+@@ -215,6 +221,7 @@ static ssize_t set_vcom(struct device *dev,
+ 	 * get the interrupt status register value
+ 	 */
+ 	tps6518x_reg_read(REG_TPS6518x_REVID,&reg_val);
++	printk("tps6518x_ set_vcom() reg_ID=%d \n",reg_val);
+ 	switch (reg_val & 0xff)
+ 	{
+ 	   case TPS65180_PASS1 :
+@@ -222,16 +229,17 @@ static ssize_t set_vcom(struct device *dev,
+ 	   case TPS65181_PASS1 :
+ 	   case TPS65181_PASS2 :
+ 		    tps6518x_reg_write(REG_TPS65180_VCOM_ADJUST, vcom_reg_val&0xff);
++//			printk("tps6518x_ set_vcom() CASE:TPS65181_PASS2 set_value=%d \n",(vcom_reg_val&0xff));
+ 	        break;
+ 	   case TPS65185_PASS0 :
+ 	   case TPS65186_PASS0 :
+ 	   case TPS65185_PASS1 :
+ 	   case TPS65186_PASS1 :
+ 	   case TPS65185_PASS2 :
+-	   case	TPS65185_PASS3 :
+ 	   case TPS65186_PASS2 :
+ 		    tps6518x_reg_write(REG_TPS65185_VCOM1, vcom_reg_val&0xff);
+ 		    tps6518x_reg_write(REG_TPS65185_VCOM2, (vcom_reg_val>>8)&0xff);
++//			printk("tps6518x_ set_vcom() CASE:TPS65186_PASS2 set_valueVCOM2=%d \n",((vcom_reg_val>>8)&0xff));	
+ 	        break;
+ 	   default:
+ 		break;	
+@@ -299,7 +307,7 @@ exit:
+ static int tps6518x_sensor_remove(struct platform_device *pdev)
+ {
+ 	struct tps6518x_data *data = platform_get_drvdata(pdev);
+-
++	printk("tps6518x_ sensor_remove() \n");
+ 	hwmon_device_unregister(data->hwmon_dev);
+ 	sysfs_remove_group(&pdev->dev.kobj, &tps6518x_group);
+ 
+diff --git a/drivers/mfd/tps6518x-core.c b/drivers/mfd/tps6518x-core.c
+index bd2692c..683413e 100644
+--- a/drivers/mfd/tps6518x-core.c
++++ b/drivers/mfd/tps6518x-core.c
+@@ -68,11 +68,12 @@ int tps6518x_reg_read(int reg_num, unsigned int *reg_val)
+ 
+ 	result = i2c_smbus_read_byte_data(tps6518x_client, reg_num);
+ 	if (result < 0) {
+-		dev_err(&tps6518x_client->dev,
+-			"Unable to read tps6518x register via I2C\n");
++//		dev_err(&tps6518x_client->dev,
++//			"Unable to read tps6518x register via I2C\n");
++//		printk("tps6518x_  Error read, Address=%u  registro=%u\n",&tps6518x_client->addr,reg_num);
+ 		return PMIC_ERROR;
+ 	}
+-
++	
+ 	*reg_val = result;
+ 	return PMIC_SUCCESS;
+ }
+@@ -87,10 +88,13 @@ int tps6518x_reg_write(int reg_num, const unsigned int reg_val)
+ 	result = i2c_smbus_write_byte_data(tps6518x_client, reg_num, reg_val);
+ 	if (result < 0) {
+ 		dev_err(&tps6518x_client->dev,
+-			"tps6518x-core.c line-90:14, Unable to write TPS6518x register via I2C\n");
++			"Unable to write TPS6518x register via I2C\n");
++//		printk("tps6518x_ ERROR Write - tps6518x_reg_write in tps6518x-core, Address= %u  reg= %u valor= %u\n",
++//		&tps6518x_client->addr,reg_num, reg_val);
+ 		return PMIC_ERROR;
+ 	}
+-
++//	printk("tps6518x_ OK Write - tps6518x_reg_write in tps6518x-core, Address= %u  reg= %u valor= %u\n",
++//		&tps6518x_client->addr,reg_num, reg_val);
+ 	return PMIC_SUCCESS;
+ }
+ 
+@@ -169,12 +173,11 @@ static int tps6518x_probe(struct i2c_client *client,
+ 
+ 	}
+ 	tps6518x->pdata = pdata;
+-
+-	dev_info(&client->dev, "PMIC TPS6518x for eInk display - BomShell V2 - Development by INTI \n");
++	/* Set Power Good Polarity for BombShellv2 HW */
++	tps6518x->pwrgood_polarity=1;
++	dev_info(&client->dev, "PMIC TPS6518x for eInk display\n");
+ 
+ 	printk("tps6518x_probe success\n");
+-	gpio_set_value(tps6518x->gpio_pmic_wakeup,1);
+-	gpio_set_value(tps6518x->gpio_pmic_powerup,0);
+ 
+ 	return ret;
+ 
+@@ -226,8 +229,7 @@ static int tps6518x_detect(struct i2c_client *client,
+ 	 * Known rev-ids
+ 	 * tps165180 pass 1 = 0x50, tps65180 pass2 = 0x60, tps65181 pass1 = 0x51, tps65181 pass2 = 0x61, 
+ 	 * tps65182, 
+-	 * tps65185 pass0 = 0x45, tps65186 pass0 0x46, tps65185 pass1 = 0x55, tps65186 pass1 0x56, tps65185 pass2 = 0x65, 		tps65186 pass2 0x66 
+-	add new ref. TPS65185_PASS3 0xFB BomShell V2 hardware
++	 * tps65185 pass0 = 0x45, tps65186 pass0 0x46, tps65185 pass1 = 0x55, tps65186 pass1 0x56, tps65185 pass2 = 0x65, tps65186 pass2 0x66, add revID= 0xFB BombShell v2 HW
+ 	 */
+ 	if (!((revId == TPS65180_PASS1) ||
+ 		 (revId == TPS65181_PASS1) ||
+@@ -238,7 +240,6 @@ static int tps6518x_detect(struct i2c_client *client,
+ 		 (revId == TPS65185_PASS1) ||
+ 		 (revId == TPS65186_PASS1) ||
+ 		 (revId == TPS65185_PASS2) ||
+-		 (revId == TPS65185_PASS3) || // add BombShellv2
+ 		 (revId == TPS65186_PASS2)))
+ 	{
+ 		dev_info(&adapter->dev,
+@@ -249,7 +250,7 @@ static int tps6518x_detect(struct i2c_client *client,
+ 	if (info) {
+ 		strlcpy(info->type, "tps6518x_sensor", I2C_NAME_SIZE);
+ 	}
+-    printk("tps6518x_detect success\n");
++    printk("tps6518x_ Detect success! revId==0x%02X \n", revId);
+ 
+ 	return 0;
+ }
+@@ -300,5 +301,4 @@ static void __exit tps6518x_exit(void)
+  * Module entry points
+  */
+ subsys_initcall(tps6518x_init);
+-//module_init(tps6518x_init);
+ module_exit(tps6518x_exit);
+diff --git a/drivers/regulator/tps6518x-regulator.c b/drivers/regulator/tps6518x-regulator.c
+index 3419962..5f4b7a1 100644
+--- a/drivers/regulator/tps6518x-regulator.c
++++ b/drivers/regulator/tps6518x-regulator.c
+@@ -124,16 +124,18 @@ static int epdc_pwr0_disable(struct regulator_dev *reg)
+ static int tps6518x_v3p3_enable(struct regulator_dev *reg)
+ {
+ 	struct tps6518x *tps6518x = rdev_get_drvdata(reg);
+-
++	printk ("tps6518x_ Regulator V3P3 Enable - powerUp 1 line127\n\n");
+ 	gpio_set_value(tps6518x->gpio_pmic_powerup, 1);
++	//gpio_set_value(tps6518x->gpio_pmic_wakeup, 1); //add
+ 	return 0;
+ }
+ 
+ static int tps6518x_v3p3_disable(struct regulator_dev *reg)
+ {
+ 	struct tps6518x *tps6518x = rdev_get_drvdata(reg);
+-
++	printk ("tps6518x_ Regulator V3P3 Disable - powerUp 0 line136\n\n");
+ 	gpio_set_value(tps6518x->gpio_pmic_powerup, 0);
++	////gpio_set_value(tps6518x->gpio_pmic_wakeup, 0); //add
+ 	return 0;
+ 
+ }
+@@ -166,21 +168,10 @@ static int tps6518x_vcom_set_voltage(struct regulator_dev *reg,
+ 	if (uV < 200000)
+ 		return 0;
+ #endif
+-
++	printk("tps6518x_ Funcion VCOM_set_voltage ID=%u \n",tps6518x->revID);	
+ 	switch (tps6518x->revID & 15)
+ 	{
+-		case 0 : /* TPS65180 */
+-		case 1 : /* TPS65181 */
+-		case 4 : /* TPS65180-rev1 */
+-			tps6518x_reg_read(REG_TPS65180_VCOM_ADJUST,&cur_reg_val);
+-			new_reg_val = to_reg_val(cur_reg_val,
+-					BITFMASK(VCOM_SET),
+-					BITFVAL(VCOM_SET, vcom_uV_to_rs(uV)));
+-
+-			retval = tps6518x_reg_write(REG_TPS65180_VCOM_ADJUST,
+-					new_reg_val);
+-			break;
+-		case 5 : /* TPS65185 */
++		case 0 : /* TPS65185 - BombSHELL */	
+ 			gpio_set_value(tps6518x->gpio_pmic_wakeup,1);
+ 			retval = tps6518x_reg_write(REG_TPS65185_VCOM1,
+ 					vcom2_uV_to_rs(uV) & 255);
+@@ -191,9 +182,21 @@ static int tps6518x_vcom_set_voltage(struct regulator_dev *reg,
+ 
+ 			retval = tps6518x_reg_write(REG_TPS65185_VCOM2,
+ 					new_reg_val);
++			printk("tps6518x_ VCOM_set_voltage CASE:0  value=%d\n",retval);
++			break;
++		case 1 : /* TPS65181 */
++		case 4 : /* TPS65180-rev1 */
++			tps6518x_reg_read(REG_TPS65180_VCOM_ADJUST,&cur_reg_val);
++			new_reg_val = to_reg_val(cur_reg_val,
++					BITFMASK(VCOM_SET),
++					BITFVAL(VCOM_SET, vcom_uV_to_rs(uV)));
+ 
++			retval = tps6518x_reg_write(REG_TPS65180_VCOM_ADJUST,
++					new_reg_val);
+ 			break;
++		case 5 : /* TPS65185 */
+ 		case 6 : /* TPS65186 */
++			printk("tps6518x_ VCOM_set_voltage CASE:6 \n");	
+ 			gpio_set_value(tps6518x->gpio_pmic_wakeup,1);
+ 			retval = tps6518x_reg_write(REG_TPS65185_VCOM1,
+ 					vcom2_uV_to_rs(uV) & 255);
+@@ -204,7 +207,7 @@ static int tps6518x_vcom_set_voltage(struct regulator_dev *reg,
+ 
+ 			retval = tps6518x_reg_write(REG_TPS65185_VCOM2,
+ 					new_reg_val);
+-
++			printk("tps6518x_ VCOM_set_voltage CASE:6  value=%d\n",retval);
+ 			break;
+ 		default :
+ 		retval = -1;
+@@ -225,10 +228,16 @@ static int tps6518x_vcom_get_voltage(struct regulator_dev *reg)
+ 	 */
+ 	if (tps6518x->revID == 65182)
+ 		return 0;
+-	
++	printk("tps6518x_ VCOM_get_voltage Function ID=%u \n",tps6518x->revID);	
+ 	switch (tps6518x->revID & 15)
+ 	{
+-		case 0 : /* TPS65180 */
++		case 0 : /* TPS65185 - bOMBsHELL */	
++			tps6518x_reg_read(REG_TPS65185_VCOM1,&cur_reg_val);
++			tps6518x_reg_read(REG_TPS65185_VCOM2,&cur_reg2_val);
++			cur_reg_val |= 256 * (1 & cur_reg2_val);
++			vcomValue = vcom2_rs_to_uV(cur_reg_val);
++			printk("tps6518x_ VCOM_Get_voltage CASE:0 value= %d \n",vcomValue);
++			break;
+ 		case 1 : /* TPS65181 */
+ 		case 4 : /* TPS65180-rev1 */
+ 			tps6518x_reg_read(REG_TPS65180_VCOM_ADJUST, &cur_reg_val);
+@@ -236,13 +245,8 @@ static int tps6518x_vcom_get_voltage(struct regulator_dev *reg)
+ 			vcomValue = vcom_rs_to_uV(cur_fld_val);
+ 			break;
+ 		case 5 : /* TPS65185 */
+-						tps6518x_reg_read(REG_TPS65185_VCOM1,&cur_reg_val);
+-			tps6518x_reg_read(REG_TPS65185_VCOM2,&cur_reg2_val);
+-			cur_reg_val |= 256 * (1 & cur_reg2_val);
+-			vcomValue = vcom2_rs_to_uV(cur_reg_val);
+-			break;
+-//
+ 		case 6 : /* TPS65186 */
++			printk("tps6518x_ VCOM_Get_voltage CASE:6 \n");	
+ 			tps6518x_reg_read(REG_TPS65185_VCOM1,&cur_reg_val);
+ 			tps6518x_reg_read(REG_TPS65185_VCOM2,&cur_reg2_val);
+ 			cur_reg_val |= 256 * (1 & cur_reg2_val);
+@@ -261,6 +265,7 @@ static int tps6518x_vcom_enable(struct regulator_dev *reg)
+ 	struct tps6518x *tps6518x = rdev_get_drvdata(reg);
+ 	unsigned int cur_reg_val; /* current register value */
+ 	int vcomEnable = 0;
++	int fault;
+ 	/*
+ 	 * check for the TPS65182 device
+ 	 */
+@@ -269,56 +274,70 @@ static int tps6518x_vcom_enable(struct regulator_dev *reg)
+ 		gpio_set_value(tps6518x->gpio_pmic_vcom_ctrl,vcomEnable);
+ 		return 0;
+ 	}
+-
++	printk("tps6518x_ Entro en VCOM_enable() RevID:  %u\n",tps6518x->revID);
+ 	/*
+ 	 * Check to see if we need to set the VCOM voltage.
+ 	 * Should only be done one time. And, we can
+ 	 * only change vcom voltage if we have been enabled.
+ 	 */
+-	if (!tps6518x->vcom_setup && tps6518x_is_power_good(tps6518x)) {
++	if (!tps6518x->vcom_setup && tps6518x_is_power_good(tps6518x)) { //tira vcom_SEtup=0 y tps_PWR-GOOD=1, OK!
++		printk("tps6518x_ Entro en IF VCOM_enable() vcom_SEtup=%u y tps_PWR-GOOD=%u\n",tps6518x->vcom_setup,tps6518x_is_power_good(tps6518x));		
+ 		tps6518x_vcom_set_voltage(reg,
+ 			tps6518x->vcom_uV,
+ 			tps6518x->vcom_uV,
+ 			NULL);
+ 		tps6518x->vcom_setup = true;
+ 	}
+-
++		
+ 	switch (tps6518x->revID & 15)
+ 	{
+-		case 0 : /* TPS65180 */
+-		case 1 : /* TPS65181 */
+-		case 4 : /* TPS65180-rev1 */
+-			vcomEnable = 1;
+-			break;
+-		case 5 : /* TPS65185 */
++		case 0 : /* TPS65180 - BombShell*/
+ 			tps6518x_reg_read(REG_TPS65185_VCOM2,&cur_reg_val);
++			printk("tps6518x_ VCOM2 current value = %u \n",cur_reg_val);			
+ 			// do not enable vcom if HiZ bit is set
+ 			if (cur_reg_val & (1<<VCOM_HiZ_LSH))
++			{
++				printk("tps6518x_ Do not enable VCOM_enable CASE:0 \n");			
+ 				vcomEnable = 0;
+-			else
++			}else{
+ 				vcomEnable = 1;
++				printk("tps6518x_ Enable VCOM_enable  CASE:0 value=%d \n",vcomEnable);				
++				}			
+ 			break;
+-
++		case 1 : /* TPS65181 */
++		case 4 : /* TPS65180-rev1 */
++			vcomEnable = 1;
++			break;
++		case 5 : /* TPS65185 */
+ 		case 6 : /* TPS65186 */
+ 			tps6518x_reg_read(REG_TPS65185_VCOM2,&cur_reg_val);
+ 			// do not enable vcom if HiZ bit is set
+ 			if (cur_reg_val & (1<<VCOM_HiZ_LSH))
++			{
++				printk("tps6518x_ Do not enable VCOM CASE:6 \n");			
+ 				vcomEnable = 0;
+-			else
++			}else{
+ 				vcomEnable = 1;
++				printk("tps6518x_ Enable VCOM  CASE:6\n");				
++				}			
+ 			break;
+ 		default:
+ 			vcomEnable = 0;
+ 	}
+ 	gpio_set_value(tps6518x->gpio_pmic_vcom_ctrl,vcomEnable);
+ 
++	tps6518x_reg_read(REG_TPS65185_INT2,&fault);
++	if(fault!=0)
++		printk("tps6518x_ Error vcom_enable(); Reg.0x08 (INT2), value= %d \n",fault);	
++
+ 	return 0;
+ }
+ 
+ static int tps6518x_vcom_disable(struct regulator_dev *reg)
+ {
+ 	struct tps6518x *tps6518x = rdev_get_drvdata(reg);
+-
++	
++	printk("tps6518x_ Disable VCOM \n");
+ 	gpio_set_value(tps6518x->gpio_pmic_vcom_ctrl,0);
+ 	return 0;
+ }
+@@ -334,15 +353,19 @@ static int tps6518x_vcom_is_enabled(struct regulator_dev *reg)
+ 		return 1;
+ }
+ 
+-
+ static int tps6518x_is_power_good(struct tps6518x *tps6518x)
+ {
+ 	/*
+ 	 * XOR of polarity (starting value) and current
+ 	 * value yields whether power is good.
+ 	 */
++	
++	printk("tps6518x_ Check pmic_pwrgood GPIO ori_polarity=%d, pmic_pwrgood=%d Return=%d \n",
++		tps6518x->pwrgood_polarity,tps6518x->gpio_pmic_pwrgood,(gpio_get_value(tps6518x->gpio_pmic_pwrgood) ^
++		tps6518x->pwrgood_polarity));
++
+ 	return gpio_get_value(tps6518x->gpio_pmic_pwrgood) ^
+-		tps6518x->pwrgood_polarity;
++		tps6518x->pwrgood_polarity; //set 1 Xor 1-1=0 fails y 0-1=1 in regulation mode
+ }
+ 
+ static int tps6518x_wait_power_good(struct tps6518x *tps6518x)
+@@ -351,7 +374,7 @@ static int tps6518x_wait_power_good(struct tps6518x *tps6518x)
+ 	for (i = 0; i < tps6518x->max_wait * 3; i++) {
+ 		if (tps6518x_is_power_good(tps6518x))
+ 			return 0;
+-
++		
+ 		msleep(1);
+ 	}
+ 	return -ETIMEDOUT;
+@@ -364,34 +387,56 @@ static int tps6518x_display_enable(struct regulator_dev *reg)
+ 	unsigned int fld_mask;	  /* register mask for bitfield to modify */
+ 	unsigned int fld_val;	  /* new bitfield value to write */
+ 	unsigned int new_reg_val; /* new register value to write */
++	int fault; 	/*fault INT1 INT2 */
++	
+ 	if (tps6518x->revID == 65182)
+ 	{
+ 		epdc_pwr0_enable(reg);
++//		printk("tps6518x_ iF Display_enable... \n");	
+ 	}
+ 	else
+ 	{
+-		gpio_set_value(tps6518x->gpio_pmic_wakeup,1);
+-		//gpio_set_value(tps6518x->gpio_pmic_powerup,0);
++//		printk("tps6518x_ ELSE display_enable.... \n");
++		gpio_set_value(tps6518x->gpio_pmic_wakeup,1); //ver secuencia powerUp, wakUp (orden encendido)
++		msleep(1);
+ 
+ 		/* enable display regulators */
+ 		cur_reg_val = tps65180_current_Enable_Register & 0x3f;
+-		fld_mask = BITFMASK(VDDH_EN) | BITFMASK(VPOS_EN) |
+-			BITFMASK(VEE_EN) | BITFMASK(VNEG_EN);
+-		fld_val = BITFVAL(VDDH_EN, true) | BITFVAL(VPOS_EN, true) |
+-			BITFVAL(VEE_EN, true) | BITFVAL(VNEG_EN, true) | BITFVAL(VCOM_EN, true);
++		fld_mask = BITFMASK(VCOM_EN) | BITFMASK(VDDH_EN) |     
++			BITFMASK(VPOS_EN) | BITFMASK(VEE_EN) | BITFMASK(VNEG_EN); 	// add VCOM_EN,V3P3_EN mask
++		fld_val =  BITFVAL(VCOM_EN, true) | 	
++			BITFVAL(VDDH_EN, true) | BITFVAL(VPOS_EN, true) | BITFVAL(VEE_EN, true) | BITFVAL(VNEG_EN, true);	
+ 		new_reg_val = tps65180_current_Enable_Register = to_reg_val(cur_reg_val, fld_mask, fld_val);
+-		tps6518x_reg_write(REG_TPS65180_ENABLE, new_reg_val);
++		tps6518x_reg_write(REG_TPS65185_ENABLE, new_reg_val); 	// baja 00111111
++		
++		msleep(1);
++//		printk("tps6518x_ primer write registro reg=%u - valor=%u \n\n",REG_TPS65185_ENABLE,new_reg_val,new_reg_val);
++
++	/*TODO - 	
++	The integrated power switch is used to cut the 3.3-V supply to the EPD panel and is controlled through the
++	V3P3_EN pin of the ENABLE register. In SLEEP mode the switch is automatically turned off and its output is
++	discharged to ground. The default power-up state is OFF. To turn the switch ON, set the V3P3_ENbit to 1.*/
+ 
+ 		/* turn on display regulators */
+ 		cur_reg_val = tps65180_current_Enable_Register & 0x3f;
+-		fld_mask = BITFMASK(ACTIVE);
+-		fld_val = BITFVAL(ACTIVE, true);
+-		new_reg_val = tps65180_current_Enable_Register = to_reg_val(cur_reg_val, fld_mask, fld_val);
+-		tps6518x_reg_write(REG_TPS65180_ENABLE, new_reg_val);
++		fld_mask = BITFMASK(ACTIVE); 	
++		fld_val = BITFVAL(ACTIVE, true); 
++		new_reg_val = tps65180_current_Enable_Register = to_reg_val(cur_reg_val, fld_mask, fld_val); 
++		tps6518x_reg_write(REG_TPS65185_ENABLE, new_reg_val); 	// set AcTIVE to "1"- baja 10011111
+ 		
+-		//gpio_set_value(tps6518x->gpio_pmic_powerup,1);
++//		printk("tps6518x_ segundo write registro reg=%u valor=%u \n\n",REG_TPS65185_ENABLE,new_reg_val);
++		//tps6518x_reg_write(1,191); //reg 0x01, val 0xbf - 10111111
++		//gpio_set_value(tps6518x->gpio_pmic_powerup,1); //add
+ 	}
+ 
++	msleep(1);
++	tps6518x_reg_read(REG_TPS65185_INT1,&fault);
++	if (fault!=0)
++		printk("tps6518x_ Error Reg.0x07 (INT1), value= %d \n",fault);
++	tps6518x_reg_read(REG_TPS65185_INT2,&fault);
++	if(fault!=0)
++		printk("tps6518x_ Error Reg.0x08 (INT2), value= %d \n",fault);	
++
+ 	return tps6518x_wait_power_good(tps6518x);
+ }
+ 
+@@ -415,7 +460,8 @@ static int tps6518x_display_disable(struct regulator_dev *reg)
+ 		fld_val = BITFVAL(VCOM_EN, true) | BITFVAL(STANDBY, true);
+ 		new_reg_val = tps65180_current_Enable_Register = to_reg_val(cur_reg_val, fld_mask, fld_val);
+ 		tps6518x_reg_write(REG_TPS65180_ENABLE, new_reg_val);
+-
++		//gpio_set_value(tps6518x->gpio_pmic_powerup,0);	//add
++//		printk("tps6518x_ disable, EPDC DIsplay dir=%u val= %u  line443\n",REG_TPS65180_ENABLE, new_reg_val);
+ 	}
+ 
+ 	msleep(tps6518x->max_wait);
+@@ -502,15 +548,16 @@ static void tps6518x_setup_timings(struct tps6518x *tps6518x)
+ 		tps6518x_reg_write(REG_TPS65180_PWRSEQ0, tps6518x->pwr_seq0);
+ 		tps6518x_reg_write(REG_TPS65180_PWRSEQ1, tps6518x->pwr_seq1);
+ 		tps6518x_reg_write(REG_TPS65180_PWRSEQ2, tps6518x->pwr_seq2);
+-	    }
++		printk("tps6518x_ tps65180 - setup timmings= %d, %d, %d, \n",tps6518x->pwr_seq0,
++tps6518x->pwr_seq1,tps6518x->pwr_seq2);	    
++		}
+ 	}
+-   	
++
+ 	if ((tps6518x->revID == TPS65185_PASS0) ||
+ 		 (tps6518x->revID == TPS65186_PASS0) ||
+ 		 (tps6518x->revID == TPS65185_PASS1) ||
+ 		 (tps6518x->revID == TPS65186_PASS1) ||
+ 		 (tps6518x->revID == TPS65185_PASS2) ||
+-		 (tps6518x->revID == TPS65185_PASS3) || /* Add Support for 0xFB revID tps65185 - BombShell v2 hardware */
+ 		 (tps6518x->revID == TPS65186_PASS2)) {
+ 	   tps6518x_reg_read(REG_TPS65185_UPSEQ0, &temp0);
+ 	   tps6518x_reg_read(REG_TPS65185_UPSEQ1, &temp1);
+@@ -524,7 +571,9 @@ static void tps6518x_setup_timings(struct tps6518x *tps6518x)
+ 		tps6518x_reg_write(REG_TPS65185_UPSEQ1, tps6518x->upseq1);
+ 		tps6518x_reg_write(REG_TPS65185_DWNSEQ0, tps6518x->dwnseq0);
+ 		tps6518x_reg_write(REG_TPS65185_DWNSEQ1, tps6518x->dwnseq1);
+-	    }
++		printk("tps6518x_ tps65185 - setup timmings= %d, %d, %d, %d, \n",tps6518x->upseq0,tps6518x->upseq1,
++tps6518x->dwnseq0,tps6518x->dwnseq1);	    
++		}
+ 	}
+ }
+ 
+@@ -583,12 +632,10 @@ static int tps6518x_pmic_dt_parse_pdata(struct platform_device *pdev,
+ 		}
+ 
+ 		rdata->id = i;
+-		//controlar parametros funcion of_get_regulator_init_data() modificados
+-		rdata->initdata = of_get_regulator_init_data(&pdev->dev,reg_np, tps6518x_reg); //(&pdev->dev,pmic_np, tps6518x_reg);
+-													//(reg_np,pmic_np,tps6518x_reg )
+-		/*includeed in /linux/regulator/of_regulator.h
+-of_get_regulator_init_data(struct device *dev, struct device_node *node, const struct regulator_desc *desc);
+-		*/
++		//rdata->initdata = of_get_regulator_init_data(&pdev->dev,
++			//				     reg_np);
++		rdata->initdata = of_get_regulator_init_data(&pdev->dev,reg_np, tps6518x_reg); /* BombShell V2 */
++		
+ 		rdata->reg_node = reg_np;
+ 		rdata++;
+ 	}
+@@ -724,12 +771,9 @@ static int tps6518x_regulator_probe(struct platform_device *pdev)
+ 	 * changed a limited number of times according to spec.
+ 	 */
+ 	tps6518x_setup_timings(tps6518x);
+-	//add gpio active I2C in Stanby Mode....
+-	//gpio_set_value(tps6518x->gpio_pmic_wakeup,1);
+-	//gpio_set_value(tps6518x->gpio_pmic_powerup,0);   
+-	printk("tps6518x_regulator_probe success\n");
+-	return 0;
+ 
++    printk("tps6518x_regulator_probe success\n");
++	return 0;
+ err:
+ 	while (--i >= 0)
+ 		regulator_unregister(rdev[i]);
+@@ -741,9 +785,9 @@ static int tps6518x_regulator_remove(struct platform_device *pdev)
+ 	struct tps6518x_data *priv = platform_get_drvdata(pdev);
+ 	struct regulator_dev **rdev = priv->rdev;
+ 	int i;
+-
++	printk ("tps6518x_ Unregistred regulador \n");
+ 	for (i = 0; i < priv->num_regulators; i++)
+-		regulator_unregister(rdev[i]);
++		regulator_unregister(rdev[i]);   //
+ 	return 0;
+ }
+ 
+@@ -758,18 +802,16 @@ static struct platform_driver tps6518x_regulator_driver = {
+ 	.remove = tps6518x_regulator_remove,
+ 	.id_table = tps6518x_pmic_id,
+ 	.driver = {
+-	.name = "tps6518x-pmic",
++		.name = "tps6518x-pmic",
+ 	},
+ };
+ 
+ static int __init tps6518x_regulator_init(void)
+ {
+-	printk("PMIC tps65185 regulator init, Development By INTI \n");
+ 	return platform_driver_register(&tps6518x_regulator_driver);
+ }
+ subsys_initcall_sync(tps6518x_regulator_init);
+ 
+-
+ static void __exit tps6518x_regulator_exit(void)
+ {
+ 	platform_driver_unregister(&tps6518x_regulator_driver);
+@@ -780,20 +822,21 @@ module_exit(tps6518x_regulator_exit);
+ /*
+  * Parse user specified options (`tps6518x:')
+  * example:
+- *   tps6518x:pass=2,vcom=-1250000
++ *   tps6518x:pass=2,vcom=-1250000 (uV) -1.25V
+  */
+ static int __init tps6518x_setup(char *options)
+ {
+ 	int ret;
+ 	char *opt;
+ 	unsigned long ulResult;
++	printk("tps6518x_ _init tps65185 Options= %s \n",options);//tps6518x_ _init tps65185 Options= pass=5,vcom=-1250000 	
+ 	while ((opt = strsep(&options, ",")) != NULL) {
+ 		if (!*opt)
+ 			continue;
+ 		if (!strncmp(opt, "pass=", 5)) {
+-			//ret = strict_strtoul((const char *)(opt + 5), 0, &ulResult);
+-			ret = kstrtoul((const char *)(opt + 5), 0, &ulResult);			// update to kernel > 4.1.15
++			ret = kstrtoul((const char *)(opt + 5), 0, &ulResult);
+ 			tps6518x_pass_num = ulResult;
++			printk("tps6518x_ tps6518x_pass_num=%u \n",tps6518x_pass_num);//tps6518x_ tps6518x_pass_num=5 
+ 			if (ret < 0)
+ 				return ret;
+ 		}
+@@ -801,12 +844,12 @@ static int __init tps6518x_setup(char *options)
+ 			int offs = 5;
+ 			if (opt[5] == '-')
+ 				offs = 6;
+-			//ret = strict_strtoul((const char *)(opt + offs), 0, &ulResult);
+ 			ret = kstrtoul((const char *)(opt + offs), 0, &ulResult);
+ 			tps6518x_vcom = (int) ulResult;
+ 			if (ret < 0)
+ 				return ret;
+ 			tps6518x_vcom = -tps6518x_vcom;
++			printk("tps6518x_ tps6518x_vcom= %u \n",tps6518x_vcom);//tps6518x_ tps6518x_vcom= 4293717296
+ 		}
+ 	}
+ 
+@@ -820,6 +863,7 @@ static int __init tps65182_setup(char *options)
+ 	int ret;
+ 	char *opt;
+ 	unsigned long ulResult;
++	printk("tps6518x_ _init tps65182 Options= %s ",options); 
+ 	while ((opt = strsep(&options, ",")) != NULL) {
+ 		if (!*opt)
+ 			continue;
+@@ -847,9 +891,6 @@ static int __init tps65182_setup(char *options)
+ __setup("tps65182:", tps65182_setup);
+ 
+ 
+-//module_init(tps6518x_regulator_init);
+-//module_exit(tps6518x_regulator_exit);
+-
+ /* Module information */
+ MODULE_DESCRIPTION("TPS6518x regulator driver");
+ MODULE_LICENSE("GPL");
+diff --git a/drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c b/drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c
+index bdbf005..22dec71 100644
+--- a/drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c
++++ b/drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c
+@@ -51,7 +51,7 @@
+ #include <linux/mfd/syscon.h>
+ #include <linux/regmap.h>
+ #include <linux/regulator/driver.h>
+-#include <linux/mfd/max17135.h>
++#include <linux/mfd/tps6518x.h>		 /* BombShell V2 */	
+ #include <linux/fsl_devices.h>
+ #include <linux/bitops.h>
+ #include <linux/pinctrl/consumer.h>
+@@ -814,7 +814,8 @@ static inline void epdc_set_temp(u32 temp)
+ 	unsigned int ext_temp, ext_temp_index = temp;
+ 
+ 	if (temp == DEFAULT_TEMP_INDEX) {
+-		ret = max17135_reg_read(REG_MAX17135_EXT_TEMP, &ext_temp);
++		//ret = max17135_reg_read(REG_MAX17135_EXT_TEMP, &ext_temp);
++		ret = tps6518x_reg_read(REG_TPS6518x_TMST_VAL, &ext_temp);     /*  BombShell V2  */		
+ 		if (ret == 0) {
+ 			ext_temp = ext_temp >> 8;
+ 			dev_dbg(g_fb_data->dev, "the current external temperature is %d\n",
+diff --git a/include/linux/mfd/tps6518x.h b/include/linux/mfd/tps6518x.h
+index 45c366f..b765c9b 100644
+--- a/include/linux/mfd/tps6518x.h
++++ b/include/linux/mfd/tps6518x.h
+@@ -36,11 +36,11 @@
+ #define TPS65181_PASS2 0x61
+ #define TPS65185_PASS0 0x45
+ #define TPS65186_PASS0 0x46
+-#define TPS65185_PASS1 0x55
++#define TPS65185_PASS1 0xFB		/* Bombshell V2 HW */ 
+ #define TPS65186_PASS1 0x56
+ #define TPS65185_PASS2 0x65
+ #define TPS65186_PASS2 0x66
+-#define TPS65185_PASS3 0xFB  // add new ref ID to support BomShell V2 Hardware
++
+ /*
+  * PMIC Register Addresses
+  */
+@@ -122,17 +122,17 @@ enum {
+ /* VCOM_ADJUST */
+ #define VCOM_SET_LSH    0
+ #define VCOM_SET_WID    8
+-#define VCOM1_SET_LSH    0
+-#define VCOM1_SET_WID    8
+-#define VCOM2_SET_LSH    0
+-#define VCOM2_SET_WID    1
+-#define VCOM_ACQ_LSH	15
++#define VCOM1_SET_LSH   0
++#define VCOM1_SET_WID   8
++#define VCOM2_SET_LSH   0
++#define VCOM2_SET_WID   1 //8
++#define VCOM_ACQ_LSH	15 //7
+ #define VCOM_ACQ_WID	1
+-#define VCOM_PROG_LSH	14
++#define VCOM_PROG_LSH	14 //6
+ #define VCOM_PEOG_WID	1
+-#define VCOM_HiZ_LSH	13
++#define VCOM_HiZ_LSH	13 //5
+ #define VCOM_HiZ_WID	1
+-#define VCOM_AVG_LSH	11
++#define VCOM_AVG_LSH	11 //3
+ #define VCOM_AVG_WID	2
+ /* INT_ENABLE1 */
+ #define TSD_EN_LSH        6
+-- 
+2.1.4
+
