@@ -1,5 +1,9 @@
+YOCTO BSP layer for INTI BSv2 platforms 
+
+
+
 This README file contains information on the contents of the
-bombshellv2 layer.
+inti layer.
 
 Please see the corresponding sections below for details.
 
@@ -33,11 +37,11 @@ Maintainer: XXX YYYYYY <xxx.yyyyyy@zzzzz.com>
 Table of Contents
 =================
 
-  I. Adding the bombshellv2 layer to your build
+  I. Adding the inti layer to your build
  II. Misc
 
 
-I. Adding the bombshellv2 layer to your build
+I. Adding the inti layer to your build
 =================================================
 
 --- replace with specific instructions for the bombshellv2 layer ---
@@ -45,7 +49,7 @@ I. Adding the bombshellv2 layer to your build
 In order to use this layer, you need to make the build system aware of
 it.
 
-Assuming the bombshellv2 layer exists at the top-level of your
+Assuming the inti layer exists at the top-level of your
 yocto build tree, you can add it to the build system by adding the
 location of the bombshellv2 layer to bblayers.conf, along with any
 other layers needed. e.g.:
@@ -54,11 +58,11 @@ other layers needed. e.g.:
     /path/to/yocto/meta \
     /path/to/yocto/meta-yocto \
     /path/to/yocto/meta-yocto-bsp \
-    /path/to/yocto/meta-bombshellv2 \
+    /path/to/yocto/meta-inti \
     "
 
 
 II. Misc
 ========
 
---- replace with specific information about the bombshellv2 layer ---
+--- replace with specific information about the inti layer ---
