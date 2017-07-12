@@ -217,6 +217,9 @@ fi
 echo "#Embedded Artists Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-ea \"" >> $BUILD_DIR/conf/bblayers.conf
 
+echo "#INTI-CMNB Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
+echo "#BBLAYERS += \" \${BSPDIR}/sources/meta-inti \"" >> $BUILD_DIR/conf/bblayers.conf
+
 echo "" >> $BUILD_DIR/conf/local.conf
 echo "IMAGE_INSTALL_append = \" \\" >> $BUILD_DIR/conf/local.conf
 echo "   i2c-tools-misc \\" >> $BUILD_DIR/conf/local.conf
