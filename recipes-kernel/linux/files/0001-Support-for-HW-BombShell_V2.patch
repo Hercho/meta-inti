@@ -3860,8 +3860,8 @@ index 0000000..66e326c
 +	 */
 +	
 +//	printk("tps6518x_ Check pmic_pwrgood GPIO ori_polarity=%d, pmic_pwrgood=%d Return=%d \n",
-+		tps6518x->pwrgood_polarity,tps6518x->gpio_pmic_pwrgood,(gpio_get_value(tps6518x->gpio_pmic_pwrgood) ^
-+		tps6518x->pwrgood_polarity));
++//	tps6518x->pwrgood_polarity,tps6518x->gpio_pmic_pwrgood,(gpio_get_value(tps6518x->gpio_pmic_pwrgood) ^
++//	tps6518x->pwrgood_polarity));
 +
 +	return gpio_get_value(tps6518x->gpio_pmic_pwrgood) ^
 +		tps6518x->pwrgood_polarity; //set 1 Xor 1-1=0 fails y 0-1=1 in regulation mode
